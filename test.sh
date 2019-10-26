@@ -20,4 +20,7 @@ try 0 0
 try 1 1
 try 41 41
 try 42 42
+try 123 123
+try 21 "5+20-4"
 
+echo OK
