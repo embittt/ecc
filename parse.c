@@ -36,6 +36,16 @@ bool consume(char *op) {
   return true;
 }
 
+//
+Token *consume_ident() {
+  Token *tk = token;
+  if (token->kind != TK_IDENT
+   || token->len != 1)
+    return NULL; // !!!
+  token = token->next;
+  return tk;
+}
+
 // 次のトークンが期待している記号のときには、トークンを1つ読み進める。
 // それ以外の場合にはエラーを報告する。
 void expect(char *op) {
@@ -100,7 +110,9 @@ Token *tokenize() {
 
      || *p == '<' || *p == '>'
 
-     || *p == '*' || *p == '/' || *p == '(' || *p == ')') {
+     || *p == '*' || *p == '/' || *p == '(' || *p == ')'
+
+     || *p == '=' || *p == ';') { // !!!
       cur = new_token(TK_RESERVED, cur, p++, 1);
       continue;
     }
@@ -110,6 +122,12 @@ Token *tokenize() {
       char *oldp = p;
       cur->val = strtol(p, &p, 10);
       cur->len = p - oldp;
+      continue;
+    }
+
+    if ('a' <= *p && *p <= 'z') {
+      cur = new_token(TK_IDENT, cur, p++, 1);
+      cur->len = 1;
       continue;
     }
 
@@ -141,8 +159,28 @@ Node *new_node_num(int val) {
 
 
 
+void program() {
+  int i = 0;
+  while (!at_eof())
+    code[i++] = stmt();
+  code[i] = NULL;
+}
+
+Node *stmt() {
+  Node *node = expr();
+  expect(";");
+  return node;
+}
+
 Node *expr() {
+  return assign();
+}
+
+Node *assign() {
   Node *node = equality();
+  if (consume("="))
+    node = new_node(ND_ASSIGN, node, assign()); // !!!
+    //node = new_node(ND_ASSIGN, node, equality());
 
   return node;
 }
@@ -219,6 +257,15 @@ Node *primary() {
   if (consume("(")) {
     Node *node = expr();
     expect(")");
+    return node;
+  }
+
+
+  Token *tok = consume_ident();
+  if (tok) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_LVAR;
+    node->offset = (tok->str[0] - 'a' + 1) * 8;
     return node;
   }
 

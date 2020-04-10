@@ -6,3 +6,6 @@ Token *token;
 // 入力プログラム
 char *user_input;
 
+//
+Node *code[100];
+
