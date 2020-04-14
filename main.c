@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
   // 26 var erea
   printf("  push rbp\n");
   printf("  mov rbp, rsp\n");
-  printf("  sub rsp, 208\n"); // 8 * 26
+  printf("  sub rsp, 208\n"); // 8 * 26 // !!!
 
   // AST->assembly code generation
   //gen(node);

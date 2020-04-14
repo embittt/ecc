@@ -9,3 +9,6 @@ char *user_input;
 //
 Node *code[100];
 
+//
+LVar *locals;
+

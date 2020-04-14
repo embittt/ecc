@@ -21,11 +21,14 @@ try() {
 #try 41 41
 #try 42 42
 try 123 "123;"
+try 1 "foo=1;"
+try 3 "foo=1;bar = 2;foo + bar;"
+try 6 "i1=1;i2=2;i3=3;i1+i2+i3;"
 try 1 "a=1;"
 try 2 "a=b=2;"
 try 7 "a=1+2*3;"
 try 9 "a=(1+2)*3;"
-try 9 "a=8;a+1;"
+try 10 "a=9;a+1;"
 #try 0 "a+1=5;"
 #try 0 "a+b;"
 try 21 "5+20-4;"
