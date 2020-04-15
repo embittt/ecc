@@ -28,7 +28,7 @@ void error(char *fmt, ...) {
 // 次のトークンが期待している記号のときには、トークンを1つ読み進めて
 // 真を返す。それ以外の場合には偽を返す。
 bool consume(char *op) {
-  if (token->kind != TK_RESERVED
+  if ((token->kind != TK_RESERVED && token->kind != TK_RETURN) // !!!
    || token->len != strlen(op)
    || memcmp(token->str, op, token->len))
     return false;
@@ -83,6 +83,21 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
   return tok;
 }
 
+// 与えられた文字がトークンを構成する文字か
+//int is_alnum(char c) {
+int is_aA0_(char c) {
+  return ('a' <= c && c <= 'z') ||
+         ('A' <= c && c <= 'Z') ||
+         ('0' <= c && c <= '9') ||
+         (c == '_');
+}
+
+int is_aA_(char c) {
+  return ('a' <= c && c <= 'z') ||
+         ('A' <= c && c <= 'Z') ||
+         (c == '_');
+}
+
 // 入力文字列pをトークナイズしてそれを返す
 //Token *tokenize(char *p) {
 Token *tokenize() {
@@ -126,11 +141,25 @@ Token *tokenize() {
       continue;
     }
 
-    if ('a' <= *p && *p <= 'z') {
+
+
+    //if (!strncmp(p, "return", 6) && !is_alnum(p[6])) {
+    if (!strncmp(p, "return", 6) && !is_aA0_(p[6])) {
+      cur = new_token(TK_RETURN, cur, p, 6);
+      cur->len = 6;
+      p += 6;
+      continue;
+    }
+
+
+
+    //if ('a' <= *p && *p <= 'z') {
+    if (is_aA_(*p)) {
     //  cur = new_token(TK_IDENT, cur, p++, 1);
     //  cur->len = 1;
       char *oldp = p++;
-      while (('a' <= *p && *p <= 'z') || ('0' <= *p && *p <= '9'))
+      //while (('a' <= *p && *p <= 'z') || ('0' <= *p && *p <= '9'))
+      while (is_aA0_(*p))
         p++;
       cur = new_token(TK_IDENT, cur, oldp, p - oldp);
       cur->len = p - oldp;
@@ -184,7 +213,21 @@ void program() {
 }
 
 Node *stmt() {
-  Node *node = expr();
+  //Node *node = expr();
+  //expect(";");
+  Node *node;
+
+  if (consume("return")) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_RETURN;
+    node->lhs = expr(); // lhs only, no rhs??
+  }
+  else {
+    node = expr();
+  }
+
+  //if (!consume(";"))
+  //  error_at(token->str, ";ではありません");
   expect(";");
   return node;
 }
