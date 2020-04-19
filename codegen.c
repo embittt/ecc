@@ -1,5 +1,7 @@
 #include "ecc.h"
 
+int labelNo = 0;
+
 void gen_lval(Node *node) {
   if (node->kind != ND_LVAR)
     error("代入の左辺値が変数ではありません");
@@ -34,6 +36,28 @@ void gen(Node *node) {
     printf("  mov rsp, rbp\n");
     printf("  pop rbp\n");
     printf("  ret\n");
+    return;
+  case ND_IF:
+    if (!node->els) {
+      gen(node->cond);
+      printf("  pop rax\n");
+      printf("  cmp rax, 0\n");
+      printf("  je  .Lend%03d\n", labelNo);
+      gen(node->then);
+      printf(".Lend%03d:\n", labelNo++);
+    }
+    else {
+      gen(node->cond);
+      printf("  pop rax\n");
+      printf("  cmp rax, 0\n");
+      printf("  je  .Lelse%03d\n", labelNo);
+      gen(node->then);
+      printf("  jmp .Lend%03d\n", labelNo + 1);
+      printf(".Lelse%03d:\n", labelNo);
+      gen(node->els);
+      printf(".Lend%03d:\n", labelNo + 1);
+      labelNo++;
+    }
     return;
   }
 

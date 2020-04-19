@@ -28,7 +28,10 @@ void error(char *fmt, ...) {
 // 次のトークンが期待している記号のときには、トークンを1つ読み進めて
 // 真を返す。それ以外の場合には偽を返す。
 bool consume(char *op) {
-  if ((token->kind != TK_RESERVED && token->kind != TK_RETURN) // !!!
+  if ((token->kind != TK_RESERVED
+    && token->kind != TK_RETURN
+    && token->kind != TK_IF // !!! TK_KWとしてまとめる手も
+    && token->kind != TK_ELSE) // !!!
    || token->len != strlen(op)
    || memcmp(token->str, op, token->len))
     return false;
@@ -150,6 +153,20 @@ Token *tokenize() {
       p += 6;
       continue;
     }
+    // else ???
+    else if (!strncmp(p, "if", 2) && !is_aA0_(p[2])) {
+      cur = new_token(TK_IF, cur, p, 2);
+      cur->len = 2;
+      p += 2;
+      continue;
+    }
+    // else ???
+    else if (!strncmp(p, "else", 4) && !is_aA0_(p[4])) {
+      cur = new_token(TK_IF, cur, p, 4);
+      cur->len = 4;
+      p += 4;
+      continue;
+    }
 
 
 
@@ -194,7 +211,6 @@ Node *new_node_num(int val) {
 
 
 
-
 LVar *find_lvar(Token *tok) {
   for (LVar *var = locals; var; var = var->next)
    if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
@@ -221,14 +237,25 @@ Node *stmt() {
     node = calloc(1, sizeof(Node));
     node->kind = ND_RETURN;
     node->lhs = expr(); // lhs only, no rhs??
+    expect(";");
+  }
+  else if (consume("if")) {
+    expect("(");
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_IF;
+    node->cond = expr();
+    expect(")");
+    node->then = stmt();
+    if (consume("else"))
+      node->els = stmt();
   }
   else {
     node = expr();
+    expect(";");
   }
 
   //if (!consume(";"))
   //  error_at(token->str, ";ではありません");
-  expect(";");
   return node;
 }
 
