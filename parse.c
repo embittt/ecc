@@ -31,7 +31,9 @@ bool consume(char *op) {
   if ((token->kind != TK_RESERVED
     && token->kind != TK_RETURN
     && token->kind != TK_IF // !!! TK_KWとしてまとめる手も
-    && token->kind != TK_ELSE) // !!!
+    && token->kind != TK_ELSE
+    && token->kind != TK_WHILE
+    && token->kind != TK_FOR)
    || token->len != strlen(op)
    || memcmp(token->str, op, token->len))
     return false;
@@ -44,8 +46,8 @@ Token *consume_ident() {
   Token *tk = token;
   //if (token->kind != TK_IDENT
   // || token->len != 1)
-  if (token->kind != TK_IDENT) // !!!
-    return NULL; // !!!
+  if (token->kind != TK_IDENT)
+    return NULL;
   token = token->next;
   return tk;
 }
@@ -126,12 +128,9 @@ Token *tokenize() {
 
 
     if (*p == '+' || *p == '-'
-
      || *p == '<' || *p == '>'
-
      || *p == '*' || *p == '/' || *p == '(' || *p == ')'
-
-     || *p == '=' || *p == ';') { // !!!
+     || *p == '=' || *p == ';') {
       cur = new_token(TK_RESERVED, cur, p++, 1);
       continue;
     }
@@ -153,18 +152,28 @@ Token *tokenize() {
       p += 6;
       continue;
     }
-    // else ???
     else if (!strncmp(p, "if", 2) && !is_aA0_(p[2])) {
       cur = new_token(TK_IF, cur, p, 2);
       cur->len = 2;
       p += 2;
       continue;
     }
-    // else ???
     else if (!strncmp(p, "else", 4) && !is_aA0_(p[4])) {
-      cur = new_token(TK_IF, cur, p, 4);
+      cur = new_token(TK_ELSE, cur, p, 4);
       cur->len = 4;
       p += 4;
+      continue;
+    }
+    else if (!strncmp(p, "while", 5) && !is_aA0_(p[5])) {
+      cur = new_token(TK_WHILE, cur, p, 5);
+      cur->len = 5;
+      p += 5;
+      continue;
+    }
+    else if (!strncmp(p, "for", 3) && !is_aA0_(p[3])) {
+      cur = new_token(TK_FOR, cur, p, 3);
+      cur->len = 3;
+      p += 3;
       continue;
     }
 
@@ -248,6 +257,32 @@ Node *stmt() {
     node->then = stmt();
     if (consume("else"))
       node->els = stmt();
+  }
+  else if (consume("while")) {
+    expect("(");
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_WHILE;
+    node->cond = expr();
+    expect(")");
+    node->body= stmt();
+  }
+  else if (consume("for")) {
+    expect("(");
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_FOR;
+    if (!consume(";")) {
+      node->init = expr();
+      expect(";");
+    }
+    if (!consume(";")) {
+      node->cond = expr();
+      expect(";");
+    }
+    if (!consume(")")) {
+      node->inc = expr();
+      expect(")");
+    }
+    node->body = stmt();
   }
   else {
     node = expr();
