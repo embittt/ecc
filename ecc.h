@@ -56,6 +56,7 @@ typedef enum {
   ND_IF, // if文
   ND_WHILE, // while文
   ND_FOR, // for文
+  ND_BLOCK, // {...}
 } NodeKind;
 
 typedef struct Node Node;
@@ -63,6 +64,9 @@ typedef struct Node Node;
 // 抽象構文木のノードの型
 struct Node {
   NodeKind kind; // ノードの型
+
+  Node *next;    // next node for {...} support
+
   Node *lhs;     // 左辺
   Node *rhs;     // 右辺
   int val;       // kindがND_NUMの場合のみ使う

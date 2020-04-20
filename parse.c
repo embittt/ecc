@@ -130,7 +130,8 @@ Token *tokenize() {
     if (*p == '+' || *p == '-'
      || *p == '<' || *p == '>'
      || *p == '*' || *p == '/' || *p == '(' || *p == ')'
-     || *p == '=' || *p == ';') {
+     || *p == '=' || *p == ';'
+     || *p == '{' || *p == '}') { // !!!
       cur = new_token(TK_RESERVED, cur, p++, 1);
       continue;
     }
@@ -237,6 +238,7 @@ void program() {
   code[i] = NULL;
 }
 
+
 Node *stmt() {
   //Node *node = expr();
   //expect(";");
@@ -283,6 +285,19 @@ Node *stmt() {
       expect(")");
     }
     node->body = stmt();
+  }
+  else if (consume("{")) {
+    Node head = {};
+    Node *cur = &head;
+
+    while (!consume("}")) {
+      cur->next = stmt();
+      cur = cur->next;
+    }
+
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_BLOCK;
+    node->body = head.next;
   }
   else {
     node = expr();

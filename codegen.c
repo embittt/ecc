@@ -86,6 +86,14 @@ void gen(Node *node) {
     printf(".Lend%03d:\n", labelNo + 1);
     labelNo += 2;
     return;
+  case ND_BLOCK:
+    node = node->body; // important!!!
+    while (node) {
+      gen(node);
+      // pop from stack?
+      node = node->next;
+    }
+    return;
   }
 
   gen(node->lhs);
