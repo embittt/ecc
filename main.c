@@ -16,12 +16,14 @@ int main(int argc, char **argv) {
   program();
 
   // アセンブリの前半部分を出力
+  printf("#MAIN BEGINNING\n");
   printf(".intel_syntax noprefix\n");
   printf(".global main\n");
   printf("main:\n");
 
   // prologue
   // 26 var erea
+  printf("#MAIN PROLOGUE\n");
   printf("  push rbp\n");
   printf("  mov rbp, rsp\n");
   printf("  sub rsp, 208\n"); // 8 * 26 // !!!
@@ -31,11 +33,13 @@ int main(int argc, char **argv) {
   for (int i = 0; code[i]; i++) {
     gen(code[i]);
 
-  // expression value is on the stack top
-  printf("  pop rax\n");
+    // expression value is on the stack top
+    //printf("#MAIN after gen(code[i])\n");
+    //printf("  pop rax\n");
   }
 
   // epilogue
+  printf("#MAIN EPILOGUE\n");
   printf("  mov rsp, rbp\n");
   printf("  pop rbp\n");
   printf("  ret\n");

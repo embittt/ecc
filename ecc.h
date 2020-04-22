@@ -57,6 +57,8 @@ typedef enum {
   ND_WHILE, // while文
   ND_FOR, // for文
   ND_BLOCK, // {...}
+
+  ND_EXPRSTMT, // 式文
 } NodeKind;
 
 typedef struct Node Node;

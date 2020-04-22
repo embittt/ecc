@@ -300,8 +300,12 @@ Node *stmt() {
     node->body = head.next;
   }
   else {
-    node = expr();
+    Node *nd = expr();
     expect(";");
+
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_EXPRSTMT;
+    node->lhs = nd;
   }
 
   //if (!consume(";"))

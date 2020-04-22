@@ -6,6 +6,7 @@ void gen_lval(Node *node) {
   if (node->kind != ND_LVAR)
     error("代入の左辺値が変数ではありません");
 
+  printf("# GEN_LVAL\n");
   printf("  mov rax, rbp\n");
   printf("  sub rax, %d\n", node->offset);
   printf("  push rax\n");
@@ -17,10 +18,12 @@ void gen(Node *node) {
 
   switch (node->kind) {
   case ND_NUM:
+    printf("# ND_NUM\n");
     printf("  push %d\n", node->val);
     return;
   case ND_LVAR:
     gen_lval(node);
+    printf("# ND_LVAR\n");
     printf("  pop rax\n");
     printf("  mov rax, [rax]\n");
     printf("  push rax\n");
@@ -28,6 +31,7 @@ void gen(Node *node) {
   case ND_ASSIGN:
     gen_lval(node->lhs);
     gen(node->rhs);
+    printf("# ND_ASSIGN\n");
     printf("  pop rdi\n");
     printf("  pop rax\n");
     printf("  mov [rax], rdi\n");
@@ -35,6 +39,7 @@ void gen(Node *node) {
     return;
   case ND_RETURN:
     gen(node->lhs);
+    printf("# ND_RETURN\n");
     printf("  pop rax\n");
     printf("  mov rsp, rbp\n");
     printf("  pop rbp\n");
@@ -43,26 +48,32 @@ void gen(Node *node) {
   case ND_IF:
     if (!node->els) {
       gen(node->cond);
+    printf("# ND_IF\n");
       printf("  pop rax\n");
       printf("  cmp rax, 0\n");
       printf("  je  .Lend%03d\n", labelNo);
       gen(node->then);
+    printf("# ND_IF(THEN)\n");
       printf(".Lend%03d:\n", labelNo++);
     }
     else {
       gen(node->cond);
+    printf("# ND_IF\n");
       printf("  pop rax\n");
       printf("  cmp rax, 0\n");
       printf("  je  .Lelse%03d\n", labelNo);
       gen(node->then);
+    printf("# ND_IF(THEN)\n");
       printf("  jmp .Lend%03d\n", labelNo + 1);
       printf(".Lelse%03d:\n", labelNo);
       gen(node->els);
+    printf("# ND_IF(ELSE)\n");
       printf(".Lend%03d:\n", labelNo + 1);
       labelNo += 2;
     }
     return;
   case ND_WHILE:
+    printf("# ND_WHILE\n");
     printf(".Lbegin%03d:\n", labelNo);
     gen(node->cond);
     printf("  pop rax\n");
@@ -74,14 +85,20 @@ void gen(Node *node) {
     labelNo += 2;
     return;
   case ND_FOR:
+    printf("# ND_FOR(INIT)\n");
     gen(node->init);
+    printf("  pop rax\n"); // !!!for Stack problem
     printf(".Lbegin%03d:\n", labelNo);
+    printf("# ND_FOR(COND)\n");
     gen(node->cond);
     printf("  pop rax\n");
     printf("  cmp rax, 0\n");
     printf("  je  .Lend%03d\n", labelNo + 1);
+    printf("# ND_FOR(BODY)\n");
     gen(node->body);
+    printf("# ND_FOR(INC)\n");
     gen(node->inc);
+    printf("  pop rax\n"); // !!!for Stack problem
     printf("  jmp .Lbegin%03d\n", labelNo);
     printf(".Lend%03d:\n", labelNo + 1);
     labelNo += 2;
@@ -89,10 +106,16 @@ void gen(Node *node) {
   case ND_BLOCK:
     node = node->body; // important!!!
     while (node) {
+    printf("# ND_BLOCK(STMT)\n");
       gen(node);
       // pop from stack?
       node = node->next;
     }
+    return;
+  case ND_EXPRSTMT:
+    printf("# ND_EXPRSTMT\n");
+    gen(node->lhs);
+    printf("  pop rax\n");
     return;
   }
 
