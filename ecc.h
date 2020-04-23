@@ -52,6 +52,8 @@ typedef enum {
   ND_LVAR, // ローカル変数
   ND_NUM, // 整数
 
+  ND_COMMA, // ,
+
   ND_RETURN, // return文
   ND_IF, // if文
   ND_WHILE, // while文
@@ -104,6 +106,9 @@ extern LVar *locals; // !!!
 void program();
 Node *stmt();
 Node *expr();
+
+Node *comma();
+
 Node *assign();
 Node *equality();
 Node *relational();

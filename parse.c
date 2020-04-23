@@ -131,7 +131,8 @@ Token *tokenize() {
      || *p == '<' || *p == '>'
      || *p == '*' || *p == '/' || *p == '(' || *p == ')'
      || *p == '=' || *p == ';'
-     || *p == '{' || *p == '}') { // !!!
+     || *p == '{' || *p == '}'
+     || *p == ',') { // !!!
       cur = new_token(TK_RESERVED, cur, p++, 1);
       continue;
     }
@@ -314,7 +315,21 @@ Node *stmt() {
 }
 
 Node *expr() {
-  return assign();
+  //return assign();
+  return comma();
+}
+
+
+Node *comma() {
+  Node *node = assign();
+
+  for (;;) {
+    if (consume(","))
+      node = new_node(ND_COMMA, node, assign());
+    else
+      return node;
+  }
+
 }
 
 Node *assign() {

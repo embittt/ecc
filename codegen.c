@@ -37,6 +37,13 @@ void gen(Node *node) {
     printf("  mov [rax], rdi\n");
     printf("  push rdi\n");
     return;
+  case ND_COMMA:
+    gen(node->lhs);
+    printf("# ND_COMMA\n");
+    printf("  pop rax #remove stack top(comma)\n"); // !!!for Stack problem
+    gen(node->rhs);
+    return;
+
   case ND_RETURN:
     gen(node->lhs);
     printf("# ND_RETURN\n");
@@ -87,7 +94,7 @@ void gen(Node *node) {
   case ND_FOR:
     printf("# ND_FOR(INIT)\n");
     gen(node->init);
-    printf("  pop rax\n"); // !!!for Stack problem
+    printf("  pop rax #remove stack top(if-init)\n"); // !!!for Stack problem
     printf(".Lbegin%03d:\n", labelNo);
     printf("# ND_FOR(COND)\n");
     gen(node->cond);
@@ -98,7 +105,7 @@ void gen(Node *node) {
     gen(node->body);
     printf("# ND_FOR(INC)\n");
     gen(node->inc);
-    printf("  pop rax\n"); // !!!for Stack problem
+    printf("  pop rax #remove stack top(if-inc)\n"); // !!!for Stack problem
     printf("  jmp .Lbegin%03d\n", labelNo);
     printf(".Lend%03d:\n", labelNo + 1);
     labelNo += 2;
@@ -115,7 +122,7 @@ void gen(Node *node) {
   case ND_EXPRSTMT:
     printf("# ND_EXPRSTMT\n");
     gen(node->lhs);
-    printf("  pop rax\n");
+    printf("  pop rax #remove stack top(exprstmt)\n"); // !!!for Stack problem
     return;
   }
 
