@@ -61,6 +61,7 @@ typedef enum {
   ND_BLOCK, // {...}
 
   ND_EXPRSTMT, // 式文
+  ND_EMPTYSTMT, // 空文
 } NodeKind;
 
 typedef struct Node Node;

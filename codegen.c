@@ -124,6 +124,9 @@ void gen(Node *node) {
     gen(node->lhs);
     printf("  pop rax #remove stack top(exprstmt)\n"); // !!!for Stack problem
     return;
+  case ND_EMPTYSTMT:
+    printf("# ND_EMPTYSTMT\n");
+    return;
   }
 
   gen(node->lhs);

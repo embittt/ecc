@@ -300,6 +300,10 @@ Node *stmt() {
     node->kind = ND_BLOCK;
     node->body = head.next;
   }
+  else if (consume(";")) {
+    node = calloc(1, sizeof(Node));
+    node->kind = ND_EMPTYSTMT;
+  }
   else {
     Node *nd = expr();
     expect(";");
