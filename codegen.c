@@ -93,19 +93,26 @@ void gen(Node *node) {
     return;
   case ND_FOR:
     printf("# ND_FOR(INIT)\n");
-    gen(node->init);
-    printf("  pop rax #remove stack top(if-init)\n"); // !!!for Stack problem
+    if (node->init) {
+      gen(node->init);
+      printf("  pop rax #remove stack top(if-init)\n"); // !!!for Stack problem
+    }
     printf(".Lbegin%03d:\n", labelNo);
     printf("# ND_FOR(COND)\n");
-    gen(node->cond);
+    if (node->cond)
+      gen(node->cond);
+    else
+      printf("  push 1\n");
     printf("  pop rax\n");
     printf("  cmp rax, 0\n");
     printf("  je  .Lend%03d\n", labelNo + 1);
     printf("# ND_FOR(BODY)\n");
     gen(node->body);
     printf("# ND_FOR(INC)\n");
-    gen(node->inc);
-    printf("  pop rax #remove stack top(if-inc)\n"); // !!!for Stack problem
+    if (node->inc) {
+      gen(node->inc);
+      printf("  pop rax #remove stack top(if-inc)\n"); // !!!for Stack problem
+    }
     printf("  jmp .Lbegin%03d\n", labelNo);
     printf(".Lend%03d:\n", labelNo + 1);
     labelNo += 2;
