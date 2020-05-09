@@ -424,6 +424,31 @@ Node *primary() {
   Token *tok = consume_ident();
   if (tok) {
     Node *node = calloc(1, sizeof(Node));
+
+    //if (consume("(")) {
+    //  expect(")");
+
+
+    if (consume("(")) { // 関数呼び出しである
+      if (!consume(")")) { // 実引数が1個以上ある
+        //node->args = expr(); //←実引数区切りの,をコンマ演算子と解釈してしまう
+        node->args = assign(); // 実引数1個目
+        Node *nd = node->args;
+        while (!consume(")")) { // 実引数2個目以降
+          expect(",");
+          //nd->next = expr(); //←実引数区切りの,をコンマ演算子と解釈してしまう
+          nd->next = assign();
+          nd = nd->next;
+        }
+      }
+
+      node->kind = ND_FNCALL;
+      node->str = tok->str;
+      node->len = tok->len;
+
+      return node;
+    }
+
     node->kind = ND_LVAR;
 
     //node->offset = (tok->str[0] - 'a' + 1) * 8;

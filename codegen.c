@@ -12,7 +12,17 @@ void gen_lval(Node *node) {
   printf("  push rax\n");
 }
 
+
+void putnchar(char *str, int n) {
+  for (int i = 0; i < n; i++)
+    putchar(*str++);
+}
+
+
 void gen(Node *node) {
+  // 引数渡しに使うレジスタ RDI, RSI, RDX, RCX, R8, R9
+  char *argregs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+
   if (!node)
     return;
 
@@ -27,6 +37,38 @@ void gen(Node *node) {
     printf("  pop rax\n");
     printf("  mov rax, [rax]\n");
     printf("  push rax\n");
+    return;
+  case ND_FNCALL:
+    printf("# ND_FNCALL\n");
+
+    Node *nd = node->args;
+    int i = 0;
+    while (nd) {
+      if (i > 5) // レジスタで渡せる引数は6個まで
+        break;
+      gen(nd);
+      //printf("  pop %s\n", argregs[i++]);
+      i++;
+      nd = nd->next;
+    }
+
+    while (i > 0) {
+      --i;
+      printf("  pop %s # arg %d\n", argregs[i], i);
+    }
+
+    // RSPは16の倍数でなければならない
+    printf("# RSP MUST ALIGN ON 16-BYTE BOUNDARY\n");
+    printf("  mov rax, rsp\n");
+    printf("  and rax, 15\n");
+    printf("  cmp rax, 0\n");
+    printf("  je  .Lend%03d\n", labelNo);
+    printf("  sub rsp, 8\n");
+    printf(".Lend%03d:\n", labelNo++);
+
+    printf("  call ");
+    putnchar(node->str, node->len);
+    printf("\n");
     return;
   case ND_ASSIGN:
     gen_lval(node->lhs);
@@ -102,7 +144,7 @@ void gen(Node *node) {
     if (node->cond)
       gen(node->cond);
     else
-      printf("  push 1\n");
+      printf("  push 1 #empty cond means true in FOR stmt\n");
     printf("  pop rax\n");
     printf("  cmp rax, 0\n");
     printf("  je  .Lend%03d\n", labelNo + 1);

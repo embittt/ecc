@@ -52,6 +52,8 @@ typedef enum {
   ND_LVAR, // ローカル変数
   ND_NUM, // 整数
 
+  ND_FNCALL, // 関数呼び出し
+
   ND_COMMA, // ,
 
   ND_RETURN, // return文
@@ -76,6 +78,10 @@ struct Node {
   Node *rhs;     // 右辺
   int val;       // kindがND_NUMの場合のみ使う
   int offset;    // kindがND_LVARの場合のみ使う、ローカル変数のベースポインタからのオフセット
+
+  char *str;     // kindがND_FNCALLの場合のみ使う
+  int len;       // kindがND_FNCALLの場合のみ使う
+  Node *args;    // kindがND_FNCALLの場合のみ使う
 
   // "if" ( cond ) then "else" els
   // "for" ( init; cond; inc ) body
