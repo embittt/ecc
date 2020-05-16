@@ -1,9 +1,10 @@
 #include "ecc.h"
 
-int labelNo = 0;
+int labelSeed = 0;
+int argi = 0;
 
 void gen_lval(Node *node) {
-  if (node->kind != ND_LVAR)
+  if (node->kind != ND_LVAR && node->kind != ND_ARG)
     error("代入の左辺値が変数ではありません");
 
   printf("# GEN_LVAL\n");
@@ -22,6 +23,8 @@ void putnchar(char *str, int n) {
 void gen(Node *node) {
   // 引数渡しに使うレジスタ RDI, RSI, RDX, RCX, R8, R9
   char *argregs[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+  //int argi;
+  int labelNo;
 
   if (!node)
     return;
@@ -38,8 +41,15 @@ void gen(Node *node) {
     printf("  mov rax, [rax]\n");
     printf("  push rax\n");
     return;
+  case ND_ARG:
+    gen_lval(node);
+    printf("# ND_ARG\n");
+    printf("  pop rax\n");
+    printf("  mov [rax], %s\n", argregs[argi++]);
+    return;
   case ND_FNCALL:
     printf("# ND_FNCALL\n");
+    labelNo = labelSeed++;
 
     Node *nd = node->args;
     int i = 0;
@@ -62,13 +72,53 @@ void gen(Node *node) {
     printf("  mov rax, rsp\n");
     printf("  and rax, 15\n");
     printf("  cmp rax, 0\n");
-    printf("  je  .Lend%03d\n", labelNo);
+    printf("  je  .Lels%03d\n", labelNo);
     printf("  sub rsp, 8\n");
-    printf(".Lend%03d:\n", labelNo++);
-
+    printf("  mov rax, 0 # for variadic function\n");
     printf("  call ");
     putnchar(node->str, node->len);
     printf("\n");
+    printf("  add rsp, 8\n");
+    printf("  jmp .Lend%03d\n", labelNo);
+    printf(".Lels%03d:\n", labelNo);
+    printf("  mov rax, 0 # for variadic function\n");
+    printf("  call ");
+    putnchar(node->str, node->len);
+    printf("\n");
+    printf(".Lend%03d:\n", labelNo);
+    printf("  push rax\n");
+
+    return;
+  case ND_FNDEF:
+    printf("### ND_FNDEF ###\n");
+    printf(".global ");
+    putnchar(node->str, node->len);
+    printf("\n");
+    putnchar(node->str, node->len);
+    printf(":\n");
+
+    // prologue
+    // 26 var erea
+    printf("# PROLOGUE\n");
+    printf("  push rbp\n");
+    printf("  mov rbp, rsp\n");
+    printf("  sub rsp, 208\n"); // 8 * 26 // !!!
+
+    argi = 0;
+    nd = node->args;
+    while (nd) {
+      gen(nd);
+      nd = nd->next;
+    }
+
+    gen(node->body);
+
+    // epilogue
+    printf("# EPILOGUE\n");
+    printf("  mov rsp, rbp\n");
+    printf("  pop rbp\n");
+    printf("  ret\n");
+
     return;
   case ND_ASSIGN:
     gen_lval(node->lhs);
@@ -95,6 +145,8 @@ void gen(Node *node) {
     printf("  ret\n");
     return;
   case ND_IF:
+    labelNo = labelSeed++;
+
     if (!node->els) {
       gen(node->cond);
     printf("# ND_IF\n");
@@ -103,7 +155,7 @@ void gen(Node *node) {
       printf("  je  .Lend%03d\n", labelNo);
       gen(node->then);
     printf("# ND_IF(THEN)\n");
-      printf(".Lend%03d:\n", labelNo++);
+      printf(".Lend%03d:\n", labelNo);
     }
     else {
       gen(node->cond);
@@ -113,28 +165,28 @@ void gen(Node *node) {
       printf("  je  .Lelse%03d\n", labelNo);
       gen(node->then);
     printf("# ND_IF(THEN)\n");
-      printf("  jmp .Lend%03d\n", labelNo + 1);
+      printf("  jmp .Lend%03d\n", labelNo);
       printf(".Lelse%03d:\n", labelNo);
       gen(node->els);
     printf("# ND_IF(ELSE)\n");
-      printf(".Lend%03d:\n", labelNo + 1);
-      labelNo += 2;
+      printf(".Lend%03d:\n", labelNo);
     }
     return;
   case ND_WHILE:
     printf("# ND_WHILE\n");
+    labelNo = labelSeed++;
     printf(".Lbegin%03d:\n", labelNo);
     gen(node->cond);
     printf("  pop rax\n");
     printf("  cmp rax, 0\n");
-    printf("  je  .Lend%03d\n", labelNo + 1);
+    printf("  je  .Lend%03d\n", labelNo);
     gen(node->body);
     printf("  jmp .Lbegin%03d\n", labelNo);
-    printf(".Lend%03d:\n", labelNo + 1);
-    labelNo += 2;
+    printf(".Lend%03d:\n", labelNo);
     return;
   case ND_FOR:
     printf("# ND_FOR(INIT)\n");
+    labelNo = labelSeed++;
     if (node->init) {
       gen(node->init);
       printf("  pop rax #remove stack top(if-init)\n"); // !!!for Stack problem
@@ -147,7 +199,7 @@ void gen(Node *node) {
       printf("  push 1 #empty cond means true in FOR stmt\n");
     printf("  pop rax\n");
     printf("  cmp rax, 0\n");
-    printf("  je  .Lend%03d\n", labelNo + 1);
+    printf("  je  .Lend%03d\n", labelNo);
     printf("# ND_FOR(BODY)\n");
     gen(node->body);
     printf("# ND_FOR(INC)\n");
@@ -156,8 +208,7 @@ void gen(Node *node) {
       printf("  pop rax #remove stack top(if-inc)\n"); // !!!for Stack problem
     }
     printf("  jmp .Lbegin%03d\n", labelNo);
-    printf(".Lend%03d:\n", labelNo + 1);
-    labelNo += 2;
+    printf(".Lend%03d:\n", labelNo);
     return;
   case ND_BLOCK:
     node = node->body; // important!!!

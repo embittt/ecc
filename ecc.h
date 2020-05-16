@@ -53,6 +53,8 @@ typedef enum {
   ND_NUM, // 整数
 
   ND_FNCALL, // 関数呼び出し
+  ND_FNDEF, // 関数定義
+  ND_ARG, // 仮引数
 
   ND_COMMA, // ,
 
@@ -108,9 +110,12 @@ struct LVar {
 };
 
 // local variable
-extern LVar *locals; // !!!
+//extern LVar *locals; // !!!
 
 void program();
+
+Node *function();
+
 Node *stmt();
 Node *expr();
 
@@ -123,6 +128,8 @@ Node *add();
 Node *mul();
 Node *unary();
 Node *primary();
+
+Node *arg();
 
 // 入力プログラム
 extern char *user_input;

@@ -18,15 +18,15 @@ int main(int argc, char **argv) {
   // アセンブリの前半部分を出力
   printf("#MAIN BEGINNING\n");
   printf(".intel_syntax noprefix\n");
-  printf(".global main\n");
-  printf("main:\n");
+//  printf(".global main\n");
+//  printf("main:\n");
 
   // prologue
   // 26 var erea
-  printf("#MAIN PROLOGUE\n");
-  printf("  push rbp\n");
-  printf("  mov rbp, rsp\n");
-  printf("  sub rsp, 208\n"); // 8 * 26 // !!!
+//  printf("#MAIN PROLOGUE\n");
+//  printf("  push rbp\n");
+//  printf("  mov rbp, rsp\n");
+//  printf("  sub rsp, 208\n"); // 8 * 26 // !!!
 
   // AST->assembly code generation
   //gen(node);
@@ -39,10 +39,10 @@ int main(int argc, char **argv) {
   }
 
   // epilogue
-  printf("#MAIN EPILOGUE\n");
-  printf("  mov rsp, rbp\n");
-  printf("  pop rbp\n");
-  printf("  ret\n");
+//  printf("#MAIN EPILOGUE\n");
+//  printf("  mov rsp, rbp\n");
+//  printf("  pop rbp\n");
+//  printf("  ret\n");
   return 0;
 }
 

@@ -1,5 +1,7 @@
 #include "ecc.h"
 
+LVar *locals;
+
 // エラー箇所を報告する
 void error_at(char *loc, char *fmt, ...) {
   va_list ap;
@@ -235,9 +237,47 @@ LVar *find_lvar(Token *tok) {
 void program() {
   int i = 0;
   while (!at_eof())
-    code[i++] = stmt();
+    //code[i++] = stmt();
+    code[i++] = function();
   code[i] = NULL;
 }
+
+
+
+Node *function() {
+  Node *nd;
+
+  locals = NULL;
+
+  Token *tok = consume_ident();
+  if (!tok)
+    error_at(tok->str, "IDENTではありません");
+  expect("(");
+  Node *node = calloc(1, sizeof(Node));
+
+  if (!consume(")")) { // 仮引数が1個以上ある
+    node->args = arg(); // 仮引数1個目
+    nd = node->args;
+    while (!consume(")")) { // 仮引数2個目以降
+      expect(",");
+      nd->next = arg();
+      nd = nd->next;
+    }
+  }
+
+  // 関数本体はBLOCK
+  nd = stmt();
+  if (nd->kind != ND_BLOCK)
+    error("BLOCKではありません"); // TODO
+  node->body = nd;
+
+  node->kind = ND_FNDEF;
+  node->str = tok->str; // TODO 同名の関数の多重定義チェックが必要なので先に
+  node->len = tok->len;
+
+  return node;
+}
+
 
 
 Node *stmt() {
@@ -474,5 +514,35 @@ Node *primary() {
 
   // そうでなければ数値のはず
   return new_node_num(expect_number());
+}
+
+Node *arg() {
+  Token *tok = consume_ident();
+  if (tok) {
+    Node *node = calloc(1, sizeof(Node));
+
+    node->kind = ND_ARG;
+
+    LVar *lvar = find_lvar(tok);
+    if (lvar) {
+      node->offset = lvar->offset;
+    }
+    else {
+      lvar = calloc(1, sizeof(LVar));
+      lvar->next = locals;
+      lvar->name = tok->str;
+      lvar->len = tok->len;
+      if (locals)
+        lvar->offset = locals->offset + 8; // core dump !!!
+      else
+        lvar->offset = 8;
+      node->offset = lvar->offset;
+      locals = lvar;
+    }
+
+    return node;
+  }
+  else
+    error_at(token->str, "IDENTではありません"); // TODO ?
 }
 
