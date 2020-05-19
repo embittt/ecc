@@ -4,7 +4,8 @@ int labelSeed = 0;
 int argi = 0;
 
 void gen_lval(Node *node) {
-  if (node->kind != ND_LVAR && node->kind != ND_ARG)
+  if (node->kind != ND_LVAR && node->kind != ND_ARG &&
+      node->kind != ND_REF && node->kind != ND_DEREF)
     error("代入の左辺値が変数ではありません");
 
   printf("# GEN_LVAL\n");
@@ -39,6 +40,18 @@ void gen(Node *node) {
     printf("# ND_LVAR\n");
     printf("  pop rax\n");
     printf("  mov rax, [rax]\n");
+    printf("  push rax\n");
+    return;
+  case ND_REF:
+    printf("# ND_REF\n");
+    gen_lval(node->rhs);
+    return;
+  case ND_DEREF:
+    printf("# ND_DEREF\n");
+    gen_lval(node->rhs);
+    printf("  pop rax\n");
+    printf("  mov rax, [rax]\n"); // ポインタ変数に入っているのはアドレス
+    printf("  mov rax, [rax]\n"); // そのアドレスの中身
     printf("  push rax\n");
     return;
   case ND_ARG:

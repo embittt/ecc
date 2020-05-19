@@ -40,6 +40,8 @@ typedef enum {
   ND_MUL, // *
   ND_DIV, // /
 
+  ND_REF, // reference
+  ND_DEREF, // dereference
 
   ND_EQ,  // ==
   ND_NE, // !=

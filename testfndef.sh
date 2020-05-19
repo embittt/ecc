@@ -43,4 +43,36 @@ gcc -o tmp tmp.s outn.o
 gcc -o tmp tmp.s outn.o
 ./tmp
 
+
+
+./ecc "main(){c=0;a=1;if(a)c=1;else c=2;out1(c); return 0;} func2(a,b){return a*10+b;} func4(a,b,c,d){return (func2(a,b)*100+func2(c,d));}"> tmp.s
+gcc -o tmp tmp.s outn.o
+./tmp
+
+./ecc "main(){c=0;a=0;if(a)c=1;else c=2;out1(c); return 0;} func2(a,b){return a*10+b;} func4(a,b,c,d){return (func2(a,b)*100+func2(c,d));}"> tmp.s
+gcc -o tmp tmp.s outn.o
+./tmp
+
+./ecc "main(){c=0;a=0;b=0;if(a)if(b)c=1;else c=2;out1(c); return 0;} func2(a,b){return a*10+b;} func4(a,b,c,d){return (func2(a,b)*100+func2(c,d));}"> tmp.s
+gcc -o tmp tmp.s outn.o
+./tmp
+
+./ecc "main(){c=0;a=0;b=0;if(a){if(b)c=1;}else c=2;out1(c); return 0;} func2(a,b){return a*10+b;} func4(a,b,c,d){return (func2(a,b)*100+func2(c,d));}"> tmp.s
+gcc -o tmp tmp.s outn.o
+./tmp
+
+
+
+./ecc "main(){x=3;y=&x;out1(*y); return 0;} func2(a,b){return a*10+b;} func4(a,b,c,d){return (func2(a,b)*100+func2(c,d));}"> tmp.s
+gcc -o tmp tmp.s outn.o
+./tmp
+
+./ecc "main(){x=3;y=5;z=&y+8;out1(*z); return 0;} func2(a,b){return a*10+b;} func4(a,b,c,d){return (func2(a,b)*100+func2(c,d));}"> tmp.s
+gcc -o tmp tmp.s outn.o
+./tmp
+
+./ecc "main(){x=3;y=5;z=&y+8; return(*z);} func2(a,b){return a*10+b;} func4(a,b,c,d){return (func2(a,b)*100+func2(c,d));}"> tmp.s
+gcc -o tmp tmp.s outn.o
+./tmp
+
 echo Done.

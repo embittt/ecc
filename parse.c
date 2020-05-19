@@ -134,7 +134,7 @@ Token *tokenize() {
      || *p == '*' || *p == '/' || *p == '(' || *p == ')'
      || *p == '=' || *p == ';'
      || *p == '{' || *p == '}'
-     || *p == ',') { // !!!
+     || *p == ',' || *p == '&') {
       cur = new_token(TK_RESERVED, cur, p++, 1);
       continue;
     }
@@ -447,9 +447,14 @@ Node *mul() {
 Node *unary() {
   if (consume("+"))
     return primary();
-  if (consume("-"))
+  else if (consume("-"))
     return new_node(ND_SUB, new_node_num(0), primary());
-  return primary();
+  else if (consume("&"))
+    return new_node(ND_REF, NULL, unary()); // BNF!!!
+  else if (consume("*"))
+    return new_node(ND_DEREF, NULL, unary()); // BNF!!!
+  else
+    return primary();
 }
 
 Node *primary() {
