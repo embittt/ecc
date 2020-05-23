@@ -13,6 +13,9 @@ typedef enum {
   TK_ELSE,   // keyword else
   TK_WHILE,   // keyword while
   TK_FOR,   // keyword for
+
+  TK_INT,   // keyword int
+
   TK_IDENT,    // 識別子
   TK_NUM,      // 整数トークン
   TK_EOF,      // 入力の終わりを表すトークン
@@ -53,6 +56,8 @@ typedef enum {
   ND_ASSIGN, // =
   ND_LVAR, // ローカル変数
   ND_NUM, // 整数
+
+  ND_LVDEF, // ローカル変数の定義
 
   ND_FNCALL, // 関数呼び出し
   ND_FNDEF, // 関数定義
@@ -131,6 +136,7 @@ Node *mul();
 Node *unary();
 Node *primary();
 
+Node *localvar();
 Node *arg();
 
 // 入力プログラム

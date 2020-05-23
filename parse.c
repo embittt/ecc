@@ -35,7 +35,8 @@ bool consume(char *op) {
     && token->kind != TK_IF // !!! TK_KWとしてまとめる手も
     && token->kind != TK_ELSE
     && token->kind != TK_WHILE
-    && token->kind != TK_FOR)
+    && token->kind != TK_FOR
+    && token->kind != TK_INT)
    || token->len != strlen(op)
    || memcmp(token->str, op, token->len))
     return false;
@@ -57,7 +58,13 @@ Token *consume_ident() {
 // 次のトークンが期待している記号のときには、トークンを1つ読み進める。
 // それ以外の場合にはエラーを報告する。
 void expect(char *op) {
-  if (token->kind != TK_RESERVED
+  if ((token->kind != TK_RESERVED
+    && token->kind != TK_RETURN
+    && token->kind != TK_IF
+    && token->kind != TK_ELSE
+    && token->kind != TK_WHILE
+    && token->kind != TK_FOR
+    && token->kind != TK_INT)
    || token->len != strlen(op)
    || memcmp(token->str, op, token->len))
     //error("'%c'ではありません", op);
@@ -181,6 +188,13 @@ Token *tokenize() {
       continue;
     }
 
+    else if (!strncmp(p, "int", 3) && !is_aA0_(p[3])) {
+      cur = new_token(TK_INT, cur, p, 3);
+      cur->len = 3;
+      p += 3;
+      continue;
+    }
+
 
 
     //if ('a' <= *p && *p <= 'z') {
@@ -249,6 +263,8 @@ Node *function() {
 
   locals = NULL;
 
+  expect("int");
+
   Token *tok = consume_ident();
   if (!tok)
     error_at(tok->str, "IDENTではありません");
@@ -256,10 +272,12 @@ Node *function() {
   Node *node = calloc(1, sizeof(Node));
 
   if (!consume(")")) { // 仮引数が1個以上ある
+    expect("int");
     node->args = arg(); // 仮引数1個目
     nd = node->args;
     while (!consume(")")) { // 仮引数2個目以降
       expect(",");
+      expect("int");
       nd->next = arg();
       nd = nd->next;
     }
@@ -344,6 +362,16 @@ Node *stmt() {
     node = calloc(1, sizeof(Node));
     node->kind = ND_EMPTYSTMT;
   }
+
+
+  else if (consume("int")) { // TODO stmt()の中でやるのは適切か？
+    node = localvar();
+    //localvar();
+    //node = NULL; 
+    expect(";");
+  }
+
+
   else {
     Node *nd = expr();
     expect(";");
@@ -502,6 +530,8 @@ Node *primary() {
       node->offset = lvar->offset;
     }
     else {
+      error_at(tok->str, "未定義です");
+/*
       lvar = calloc(1, sizeof(LVar));
       lvar->next = locals;
       lvar->name = tok->str;
@@ -512,6 +542,7 @@ Node *primary() {
         lvar->offset = 8;
       node->offset = lvar->offset;
       locals = lvar;
+*/
     }
 
     return node;
@@ -523,31 +554,60 @@ Node *primary() {
 
 Node *arg() {
   Token *tok = consume_ident();
-  if (tok) {
-    Node *node = calloc(1, sizeof(Node));
+  if (!tok)
+    error_at(tok->str, "IDENTではありません");
 
-    node->kind = ND_ARG;
+  Node *node = calloc(1, sizeof(Node));
+  node->kind = ND_ARG; // localvar()とarg()の違いはここだけ
 
-    LVar *lvar = find_lvar(tok);
-    if (lvar) {
-      node->offset = lvar->offset;
-    }
-    else {
-      lvar = calloc(1, sizeof(LVar));
-      lvar->next = locals;
-      lvar->name = tok->str;
-      lvar->len = tok->len;
-      if (locals)
-        lvar->offset = locals->offset + 8; // core dump !!!
-      else
-        lvar->offset = 8;
-      node->offset = lvar->offset;
-      locals = lvar;
-    }
-
-    return node;
+  LVar *lvar = find_lvar(tok);
+  if (lvar) {
+    //node->offset = lvar->offset;
+    error_at(tok->str, "二重定義です");
   }
-  else
-    error_at(token->str, "IDENTではありません"); // TODO ?
+  else {
+    lvar = calloc(1, sizeof(LVar));
+    lvar->next = locals;
+    lvar->name = tok->str;
+    lvar->len = tok->len;
+    if (locals)
+      lvar->offset = locals->offset + 8; // core dump !!!
+    else
+      lvar->offset = 8;
+    node->offset = lvar->offset;
+    locals = lvar;
+  }
+
+  return node;
+}
+
+Node *localvar() {
+  Token *tok = consume_ident();
+  if (!tok)
+    error_at(tok->str, "IDENTではありません");
+
+  Node *node = calloc(1, sizeof(Node));
+  //node->kind = ND_LVAR;
+  node->kind = ND_LVDEF; // localvar()とarg()の違いはここだけ
+
+  LVar *lvar = find_lvar(tok);
+  if (lvar) {
+    //node->offset = lvar->offset;
+    error_at(tok->str, "二重定義です");
+  }
+  else {
+    lvar = calloc(1, sizeof(LVar));
+    lvar->next = locals;
+    lvar->name = tok->str;
+    lvar->len = tok->len;
+    if (locals)
+      lvar->offset = locals->offset + 8; // core dump !!!
+    else
+      lvar->offset = 8;
+    node->offset = lvar->offset;
+    locals = lvar;
+  }
+
+  return node;
 }
 

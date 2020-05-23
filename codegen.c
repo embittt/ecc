@@ -31,6 +31,9 @@ void gen(Node *node) {
     return;
 
   switch (node->kind) {
+  case ND_LVDEF:
+    printf("# ND_LVDEF\n");
+    return;
   case ND_NUM:
     printf("# ND_NUM\n");
     printf("  push %d\n", node->val);
@@ -126,7 +129,7 @@ void gen(Node *node) {
 
     gen(node->body);
 
-    // epilogue
+    // epilogue // TODO 通常不要
     printf("# EPILOGUE\n");
     printf("  mov rsp, rbp\n");
     printf("  pop rbp\n");
