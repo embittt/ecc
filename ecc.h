@@ -75,11 +75,25 @@ typedef enum {
   ND_EMPTYSTMT, // 空文
 } NodeKind;
 
+
+//typedef enum { TY_INT, TY_PTR } TypeKind;
+typedef enum { TY_INT, TY_CHAR } TypeKind;
+
+typedef struct Type Type;
+struct Type {
+  TypeKind kind;
+  //Type *base;
+  int refdepth;
+};
+
+
 typedef struct Node Node;
 
 // 抽象構文木のノードの型
 struct Node {
   NodeKind kind; // ノードの型
+
+  Type *type;    // !!! TypeではなくTypeへのポインタを保持
 
   Node *next;    // next node for {...} support
 

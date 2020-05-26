@@ -27,6 +27,16 @@ void error(char *fmt, ...) {
   exit(1);
 }
 
+
+
+bool peek_type() {
+  if (token->kind != TK_INT)
+    return false;
+  return true;
+}
+
+
+
 // 次のトークンが期待している記号のときには、トークンを1つ読み進めて
 // 真を返す。それ以外の場合には偽を返す。
 bool consume(char *op) {
@@ -272,12 +282,12 @@ Node *function() {
   Node *node = calloc(1, sizeof(Node));
 
   if (!consume(")")) { // 仮引数が1個以上ある
-    expect("int");
+    //expect("int");
     node->args = arg(); // 仮引数1個目
     nd = node->args;
     while (!consume(")")) { // 仮引数2個目以降
       expect(",");
-      expect("int");
+      //expect("int");
       nd->next = arg();
       nd = nd->next;
     }
@@ -286,7 +296,8 @@ Node *function() {
   // 関数本体はBLOCK
   nd = stmt();
   if (nd->kind != ND_BLOCK)
-    error("BLOCKではありません"); // TODO
+    //error("BLOCKではありません"); // TODO
+    error_at(token->str, "BLOCKではありません"); // TODO
   node->body = nd;
 
   node->kind = ND_FNDEF;
@@ -299,8 +310,6 @@ Node *function() {
 
 
 Node *stmt() {
-  //Node *node = expr();
-  //expect(";");
   Node *node;
 
   if (consume("return")) {
@@ -364,10 +373,8 @@ Node *stmt() {
   }
 
 
-  else if (consume("int")) { // TODO stmt()の中でやるのは適切か？
+  else if (peek_type()) { // TODO stmt()の中でやるのは適切か？
     node = localvar();
-    //localvar();
-    //node = NULL; 
     expect(";");
   }
 
@@ -381,8 +388,6 @@ Node *stmt() {
     node->lhs = nd;
   }
 
-  //if (!consume(";"))
-  //  error_at(token->str, ";ではありません");
   return node;
 }
 
@@ -552,13 +557,22 @@ Node *primary() {
   return new_node_num(expect_number());
 }
 
-Node *arg() {
+Node *ident() {
+  Type *ty = calloc(1, sizeof(Type));
+  if(consume("int"))
+    ty->kind = TY_INT;
+  else
+    error_at(token->str, "型ではありません");
+  while (consume("*"))
+    ty->refdepth++;
+
   Token *tok = consume_ident();
   if (!tok)
     error_at(tok->str, "IDENTではありません");
 
   Node *node = calloc(1, sizeof(Node));
-  node->kind = ND_ARG; // localvar()とarg()の違いはここだけ
+  //node->kind = ND_ARG; // localvar()とarg()の違いはここだけ
+  node->type = ty;
 
   LVar *lvar = find_lvar(tok);
   if (lvar) {
@@ -581,32 +595,16 @@ Node *arg() {
   return node;
 }
 
+Node *arg() {
+  Node *node = ident();
+  node->kind = ND_ARG; // localvar()とarg()の違いはここだけ
+
+  return node;
+}
+
 Node *localvar() {
-  Token *tok = consume_ident();
-  if (!tok)
-    error_at(tok->str, "IDENTではありません");
-
-  Node *node = calloc(1, sizeof(Node));
-  //node->kind = ND_LVAR;
+  Node *node = ident();
   node->kind = ND_LVDEF; // localvar()とarg()の違いはここだけ
-
-  LVar *lvar = find_lvar(tok);
-  if (lvar) {
-    //node->offset = lvar->offset;
-    error_at(tok->str, "二重定義です");
-  }
-  else {
-    lvar = calloc(1, sizeof(LVar));
-    lvar->next = locals;
-    lvar->name = tok->str;
-    lvar->len = tok->len;
-    if (locals)
-      lvar->offset = locals->offset + 8; // core dump !!!
-    else
-      lvar->offset = 8;
-    node->offset = lvar->offset;
-    locals = lvar;
-  }
 
   return node;
 }

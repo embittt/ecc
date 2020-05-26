@@ -136,8 +136,11 @@ void gen(Node *node) {
     printf("  ret\n");
 
     return;
-  case ND_ASSIGN:
-    gen_lval(node->lhs);
+  case ND_ASSIGN: // TODO 両辺の型の整合チェックはどこでやるべきか
+    if (node->lhs->kind == ND_DEREF)
+      gen(node->lhs->rhs);
+    else
+      gen_lval(node->lhs);
     gen(node->rhs);
     printf("# ND_ASSIGN\n");
     printf("  pop rdi\n");
@@ -229,7 +232,7 @@ void gen(Node *node) {
   case ND_BLOCK:
     node = node->body; // important!!!
     while (node) {
-    printf("# ND_BLOCK(STMT)\n");
+    printf("# ND_BLOCK(Each STMT)\n");
       gen(node);
       // pop from stack?
       node = node->next;

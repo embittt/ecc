@@ -73,6 +73,26 @@ gcc -o tmp tmp.s outn.o
 
 
 
+./ecc "int main(){int x;int *y;x=3;y=&x;out1(*y); return 0;} int func2(int a, int b){return a*10+b;} int func4(int a, int b, int c, int d){return (func2(a,b)*100+func2(c,d));}"> tmp.s
+gcc -o tmp tmp.s outn.o
+./tmp
+
+./ecc "int main(){int x;int y;int *z;x=3;y=5;z=&y+8;out1(*z); return 0;} int func2(int a, int b){return a*10+b;} int func4(int a, int b, int c, int d){return (func2(a,b)*100+func2(c,d));}"> tmp.s
+gcc -o tmp tmp.s outn.o
+./tmp
+
+
+
+./ecc "int main(){int x;int *y;y=&x;*y=33;out1(x); return 0;} int func2(int a, int b){return a*10+b;} int func4(int a, int b, int c, int d){return (func2(a,b)*100+func2(c,d));}"> tmp.s
+gcc -o tmp tmp.s outn.o
+./tmp
+
+./ecc "int main(){int x;int *y;int **z;y=&x;z=&y;**z=44;out1(x); return 0;} int func2(int a, int b){return a*10+b;} int func4(int a, int b, int c, int d){return (func2(a,b)*100+func2(c,d));}"> tmp.s
+gcc -o tmp tmp.s outn.o
+./tmp
+
+
+
 ./ecc "int main(){int x;x=2;out1(add(x)); return 0;} int add(int a){int b;b=10; return a+b;} int func2(int a, int b){return a*10+b;} int func4(int a, int b, int c, int d){return (func2(a,b)*100+func2(c,d));}"> tmp.s
 gcc -o tmp tmp.s outn.o
 ./tmp
